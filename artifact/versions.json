@@ -1,0 +1,37 @@
+[
+ {
+  "id": "v1",
+  "title": "First physical model",
+  "note": "Slap, bubbles, spray, droplets, slosh — all present, but the sole's slap carried nearly all the energy: a clap with a faint wet tail."
+ },
+ {
+  "id": "v2",
+  "title": "A splash is many small splashes",
+  "note": "Bubbles now come in pockets torn from one parcel of air; thrown-up water lands as blobs and droplets. Bubbly at last, but dark."
+ },
+ {
+  "id": "v3",
+  "title": "Balance",
+  "note": "Brighter fizz, bubbles inside turbulent pockets damped harder, slosh fading after the step instead of leaving stray grains."
+ },
+ {
+  "id": "v4",
+  "title": "Drops",
+  "note": "Droplet ticks moved down to 0.8–6 kHz (a 1 mm drop at 2 m/s touches down over half a millisecond); the patter ends near 0.6 s."
+ },
+ {
+  "id": "v5",
+  "title": "Stepping out",
+  "note": "The foot lifting out is quieter than the step in; leftover ripples and a faint noise floor replace digital silence; walks vary step to step."
+ },
+ {
+  "id": "v6",
+  "title": "No more crackle",
+  "note": "The first thing a human ear caught (it hid in the spectrograms): since v3, hundreds of droplet ticks per second crackled in the tail. Mist is now silent, a slow drop lands softly (p ∝ a·v²), and ripples settle after each step."
+ },
+ {
+  "id": "v7",
+  "title": "Soft knocks",
+  "note": "The walk still crackled: every drip, droplet and splat landed as the same crisp click. Now each knock lasts its contact time a/v (a 2 mm drip is a dull 1 ms “tup”; its bright part is the bubble it traps), and bubbles torn from a turbulent pocket start over a cycle instead of instantly."
+ }
+]

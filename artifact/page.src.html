@@ -1,0 +1,988 @@
+<title>Sploosh</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL,CRSV,MONO@-15..0,300..1000,0..1,0..1,0..1&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  --ground: #edf2f3;
+  --surface: #f8fafa;
+  --ink: #0c1b22;
+  --ink-2: #44565d;
+  --muted: #6a7c83;
+  --rule: #cbd7db;
+  --accent: #0a737c;
+  --accent-ink: #ffffff;
+  --hot: #c9711c;
+  --chip: #dde7ea;
+  --screen: #050e14;
+  --screen-2: #0a1a23;
+  --screen-ink: #9fb6bd;
+  --screen-rule: #173340;
+  --display: "Recursive", "Trebuchet MS", system-ui, sans-serif;
+  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --mono: "Recursive", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #071015;
+    --surface: #0c1920;
+    --ink: #e2ecee;
+    --ink-2: #9db0b6;
+    --muted: #6f848b;
+    --rule: #1b2e36;
+    --accent: #45c1ca;
+    --accent-ink: #03161b;
+    --hot: #f0ad5a;
+    --chip: #13252d;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #071015;
+  --surface: #0c1920;
+  --ink: #e2ecee;
+  --ink-2: #9db0b6;
+  --muted: #6f848b;
+  --rule: #1b2e36;
+  --accent: #45c1ca;
+  --accent-ink: #03161b;
+  --hot: #f0ad5a;
+  --chip: #13252d;
+}
+
+html, body { background: var(--ground); }
+[hidden] { display: none !important; }
+body {
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.55;
+}
+.page {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding-inline: 20px;
+  padding-block: 36px 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+.mono, .readout, .val, .axis, .lane-btn, .ver-id, .kv {
+  font-family: var(--mono);
+  font-variation-settings: "MONO" 1, "CASL" 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- masthead */
+.masthead { display: grid; gap: 14px; }
+.wordmark {
+  margin: 0;
+  font-family: var(--display);
+  font-variation-settings: "CASL" 1, "wght" 950, "slnt" -9, "CRSV" 1;
+  font-size: clamp(64px, 12vw, 132px);
+  line-height: 0.86;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.wordmark .oo { color: var(--accent); }
+.lede { margin: 0; max-width: 62ch; font-size: 19px; color: var(--ink-2); text-wrap: pretty; }
+.lede strong { color: var(--ink); font-weight: 600; }
+
+/* ---------- instrument */
+.instrument { display: grid; gap: 14px; }
+.screen {
+  position: relative;
+  background: var(--screen);
+  border-radius: 10px;
+  padding: 12px 12px 10px 0;
+  box-shadow: inset 0 0 0 1px var(--screen-rule);
+}
+#main { display: block; width: 100%; cursor: crosshair; touch-action: manipulation; }
+.lane-labels { position: absolute; left: 0; top: 0; }
+.lane-btn {
+  position: absolute;
+  left: 2px;
+  height: 15px;
+  width: 92px;
+  padding: 0 4px 0 14px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--screen-ink);
+  font-size: 10.5px;
+  line-height: 15px;
+  text-align: right;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lane-btn::before {
+  content: "";
+  position: absolute;
+  left: 3px; top: 4px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--c);
+}
+.lane-btn:hover { background: var(--screen-2); color: #e8f3f5; }
+.lane-btn[aria-pressed="false"] { color: #4b6570; text-decoration: line-through; }
+.lane-btn[aria-pressed="false"]::before { background: transparent; box-shadow: inset 0 0 0 1px var(--c); }
+.lane-btn:focus-visible { outline: 2px solid var(--hot); outline-offset: 0; }
+
+.transport {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+button { font: inherit; color: inherit; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  font-family: var(--display);
+  font-variation-settings: "CASL" 0.4, "wght" 600;
+  font-size: 15px;
+  cursor: pointer;
+}
+.btn:hover { border-color: var(--accent); }
+.btn:focus-visible, .seg button:focus-visible, .toggle input:focus-visible + span, input[type=range]:focus-visible {
+  outline: 2px solid var(--hot);
+  outline-offset: 2px;
+}
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  padding: 0 22px 0 18px;
+  font-variation-settings: "CASL" 0.6, "wght" 750;
+  font-size: 17px;
+}
+.btn svg { width: 16px; height: 16px; fill: currentColor; }
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.seg button {
+  border: 0;
+  background: transparent;
+  height: 38px;
+  padding: 0 14px;
+  font-family: var(--display);
+  font-variation-settings: "CASL" 0.4, "wght" 560;
+  font-size: 14.5px;
+  cursor: pointer;
+  color: var(--ink-2);
+}
+.seg button + button { border-left: 1px solid var(--rule); }
+.seg button[aria-checked="true"] { background: var(--chip); color: var(--ink); font-variation-settings: "CASL" 0.4, "wght" 750; }
+.toggle { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; font-size: 15px; color: var(--ink-2); }
+.toggle input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+.toggle:has(input:disabled) { opacity: 0.45; cursor: default; }
+.readout { font-size: 12.5px; color: var(--muted); margin-left: auto; }
+.note-line { font-size: 14px; color: var(--muted); margin: -4px 0 0; min-height: 1.4em; }
+
+.card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 16px;
+  align-items: start;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+}
+.card .swatch { width: 12px; height: 12px; border-radius: 50%; margin-top: 7px; background: var(--c); }
+.card h3 { margin: 0; font-family: var(--display); font-variation-settings: "CASL" 0.5, "wght" 700; font-size: 16px; }
+.card .kv { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 2px; margin-top: 4px; }
+.card .kv b { color: var(--ink); font-weight: 600; }
+
+/* ---------- controls */
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+  gap: 18px 26px;
+}
+.ctl { display: grid; gap: 4px; }
+.ctl-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.ctl label { font-family: var(--display); font-variation-settings: "CASL" 0.3, "wght" 620; font-size: 14.5px; }
+.ctl .val { font-size: 12.5px; color: var(--accent); white-space: nowrap; }
+.ctl .hint { font-size: 13px; color: var(--muted); line-height: 1.3; }
+.ctl input[type=range] { width: 100%; accent-color: var(--accent); margin: 2px 0; }
+
+/* ---------- prose sections */
+h2 {
+  margin: 0 0 6px;
+  font-family: var(--display);
+  font-variation-settings: "CASL" 0.7, "wght" 800, "slnt" -4;
+  font-size: clamp(26px, 4vw, 34px);
+  line-height: 1.1;
+  text-wrap: balance;
+}
+.section-lede { margin: 0; max-width: 62ch; color: var(--ink-2); }
+.mech { display: grid; gap: 26px; margin-top: 22px; }
+.mech article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px 36px;
+  align-items: start;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule);
+}
+.mech h3 {
+  margin: 0;
+  font-family: var(--display);
+  font-variation-settings: "CASL" 0.5, "wght" 720;
+  font-size: 19px;
+  line-height: 1.25;
+  grid-column: 1 / -1;
+}
+.mech p { margin: 0; max-width: 62ch; }
+.mech .formula { display: grid; gap: 10px; align-content: start; }
+.mech .hear { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.btn.small { height: 32px; padding: 0 12px; font-size: 13.5px; }
+.btn.small svg { width: 12px; height: 12px; }
+math {
+  font-family: "STIX Two Math", "Cambria Math", "Latin Modern Math", "Source Serif 4", serif;
+  font-size: 1.12em;
+}
+math[display="block"] {
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+.fine { font-size: 14px; color: var(--muted); margin: 0; }
+
+/* ---------- history */
+.versions { display: grid; gap: 14px; margin-top: 18px; }
+.ver {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1.2fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--rule);
+}
+.ver-id { font-size: 20px; font-weight: 700; color: var(--accent); }
+.ver h3 { margin: 0; font-family: var(--display); font-variation-settings: "CASL" 0.5, "wght" 700; font-size: 16px; }
+.ver p { margin: 2px 0 0; font-size: 14.5px; color: var(--ink-2); line-height: 1.4; }
+.ver canvas { width: 100%; height: 72px; border-radius: 6px; background: var(--screen); display: block; }
+.ver-play { display: flex; flex-direction: column; gap: 6px; }
+.ver-play .btn[aria-pressed="true"] { border-color: var(--accent); }
+
+footer { font-size: 14px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 16px; }
+footer p { margin: 0 0 6px; max-width: 75ch; }
+a { color: var(--accent); }
+
+@media (max-width: 720px) {
+  body { font-size: 16px; }
+  .mech article { grid-template-columns: minmax(0, 1fr); }
+  .ver { grid-template-columns: 44px minmax(0, 1fr) auto; }
+  .ver canvas { grid-column: 1 / -1; grid-row: 2; }
+  .readout { margin-left: 0; width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<main class="page">
+  <header class="masthead">
+    <h1 class="wordmark">Spl<span class="oo">oo</span>sh</h1>
+    <p class="lede">A foot stepping into water, <strong>computed from the physics of bubbles and droplets</strong>.
+      No recording went into it, and it was tuned without listening: Claude can’t hear, so every choice came
+      from equations and from reading spectrograms. Press play, then take it apart.</p>
+  </header>
+
+  <section class="instrument" aria-label="The synthesizer">
+    <div class="screen" id="screen">
+      <canvas id="main" aria-label="Spectrogram of the step, with one stroke per bubble, and a lane per physical mechanism below"></canvas>
+      <div class="lane-labels" id="laneLabels"></div>
+    </div>
+    <div class="transport">
+      <button class="btn primary" id="play" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1.8v12.4L14 8z"/></svg><span>Play</span></button>
+      <button class="btn" id="reroll" type="button" title="Same physics, new random draw of every bubble and droplet">New take</button>
+      <div class="seg" role="radiogroup" aria-label="Scene" id="presets">
+        <button type="button" role="radio" data-preset="puddle">Puddle</button>
+        <button type="button" role="radio" data-preset="ankle">Ankle-deep</button>
+        <button type="button" role="radio" data-preset="shin">Shin-deep</button>
+      </div>
+      <label class="toggle"><input type="checkbox" id="exit"><span>lift the foot out</span></label>
+      <label class="toggle"><input type="checkbox" id="walk" checked><span>walk six steps</span></label>
+      <span class="readout" id="readout"></span>
+    </div>
+    <p class="note-line" id="noteLine">Click any stroke on the spectrogram to hear that one bubble alone. Click a lane name to mute that mechanism.</p>
+    <div class="card" id="bubbleCard" hidden></div>
+  </section>
+
+  <section aria-labelledby="knobs">
+    <h2 id="knobs">The knobs are physical</h2>
+    <p class="section-lede">Each slider is a quantity from the world, not an audio effect. Release it to hear the result.</p>
+    <div class="controls" id="controls" style="margin-top:18px"></div>
+  </section>
+
+  <section aria-labelledby="hearing">
+    <h2 id="hearing">What you’re hearing</h2>
+    <p class="section-lede">Water on its own is almost silent. What we call the sound of water is mostly the sound of air trapped in it.</p>
+    <div class="mech">
+      <article>
+        <h3>1 · A bubble is a tiny spring</h3>
+        <p>The air inside a bubble is a spring; the water around it is the mass. Squeezed at birth, it rings at the
+          Minnaert frequency, which depends only on its radius: a 1 mm bubble sings at 3.3 kHz, a 1 cm one at 330 Hz.
+          It rings down within milliseconds, and a bubble near the surface slides up in pitch as it rises. That upward
+          slide is the “plink” you know from dripping taps.</p>
+        <div class="formula">
+          <math display="block"><mrow><msub><mi>f</mi><mn>0</mn></msub><mo>=</mo><mfrac><mn>1</mn><mrow><mn>2</mn><mi>π</mi><mi>r</mi></mrow></mfrac><msqrt><mfrac><mrow><mn>3</mn><mi>γ</mi><msub><mi>p</mi><mn>0</mn></msub></mrow><mi>ρ</mi></mfrac></msqrt><mo>≈</mo><mfrac><mrow><mn>3.26</mn><mtext>&#x202F;m/s</mtext></mrow><mi>r</mi></mfrac></mrow></math>
+          <math display="block"><mrow><mi>p</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>=</mo><mi>a</mi><mspace width="0.2em"/><mi>sin</mi><mo>(</mo><mn>2</mn><mi>π</mi><msubsup><mo>∫</mo><mn>0</mn><mi>t</mi></msubsup><mi>f</mi><mspace width="0.15em"/><mi>d</mi><mi>τ</mi><mo>)</mo><mspace width="0.2em"/><msup><mi>e</mi><mrow><mo>−</mo><mi>d</mi><mi>t</mi></mrow></msup><mo>,</mo><mspace width="0.8em"/><mi>f</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>=</mo><msub><mi>f</mi><mn>0</mn></msub><mo stretchy="false">(</mo><mn>1</mn><mo>+</mo><mi>ξ</mi><mi>d</mi><mi>t</mi><mo stretchy="false">)</mo></mrow></math>
+          <math display="block"><mrow><mi>d</mi><mo>=</mo><mn>0.043</mn><mspace width="0.1em"/><mi>f</mi><mo>+</mo><mn>0.0014</mn><mspace width="0.1em"/><msup><mi>f</mi><mrow><mn>3</mn><mo>/</mo><mn>2</mn></mrow></msup><mspace width="0.6em"/><mtext>[s⁻¹]</mtext></mrow></math>
+          <div class="hear">
+            <button class="btn small" type="button" data-hear="bubble3"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1.8v12.4L14 8z"/></svg>one 3 mm bubble</button>
+            <button class="btn small" type="button" data-hear="bubble3flat"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1.8v12.4L14 8z"/></svg>same, deep (no rise)</button>
+            <button class="btn small" type="button" data-hear="bubble1"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1.8v12.4L14 8z"/></svg>1 mm bubble</button>
+          </div>
+        </div>
+      </article>
+      <article>
+        <h3>2 · A step tears air into pockets</h3>
+        <p>The foot drags air under the surface and the turbulence tears it into pockets; each pocket splits into a few
+          bubbles of similar size within two milliseconds. Many small ones make the bright fizz, a few big ones make the
+          “oo” in sploosh. Bubbles near the surface are loud and rising; deep ones are quiet and steady. In deeper water
+          the cavity above the foot pinches off into a couple of big bubbles, the “bloop”.</p>
+        <div class="formula">
+          <math display="block"><mrow><mtext>bubbles per log-radius</mtext><mspace width="0.4em"/><mo>∝</mo><msup><mi>r</mi><mrow><mo>−</mo><mi>γ</mi></mrow></msup><mo>,</mo><mspace width="0.8em"/><mi>a</mi><mo>∝</mo><mi>D</mi><mspace width="0.1em"/><msup><mi>r</mi><mi>α</mi></msup></mrow></math>
+          <p class="fine">D is how close to the surface a bubble is born (0 = deep, 1 = at the surface). Loud bubbles are rare: D is drawn as u² for u uniform.</p>
+          <div class="hear">
+            <button class="btn small" type="button" data-hear="solo:fizz,cloud,bloop,gurgle"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1.8v12.4L14 8z"/></svg>only the bubbles of this step</button>
+          </div>
+        </div>
+      </article>
+      <article>
+        <h3>3 · What goes up comes down</h3>
+        <p>The sole throws water up. Each blob or droplet flies a little parabola and lands T = 2v<sub>z</sub>/g later:
+          blobs splat with a few bubbles, fine droplets tick. Drops thrown faster fly longer and land harder, which is
+          what sets the length of the patter after the splash.</p>
+        <div class="formula">
+          <math display="block"><mrow><mi>T</mi><mo>=</mo><mfrac><mrow><mn>2</mn><msub><mi>v</mi><mi>z</mi></msub></mrow><mi>g</mi></mfrac><mo>,</mo><mspace width="0.8em"/><msub><mi>v</mi><mi>z</mi></msub><mo>∼</mo><mtext>lognormal</mtext><mo stretchy="false">(</mo><mn>0.6</mn><mspace width="0.1em"/><msub><mi>v</mi><mtext>foot</mtext></msub><mo>,</mo><mspace width="0.2em"/><mn>0.45</mn><mo stretchy="false">)</mo></mrow></math>
+          <div class="hear">
+            <button class="btn small" type="button" data-hear="solo:crown,spray,drop"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1.8v12.4L14 8z"/></svg>only the thrown water</button>
+          </div>
+        </div>
+      </article>
+      <article>
+        <h3>4 · The foot itself</h3>
+        <p>First the sole slaps the surface: a few milliseconds of noise as the contact line sweeps across it, plus the
+          cushion of air trapped underneath ringing near 200 Hz. The forefoot lands 25–50 ms later. The heel reaches the
+          ground after roughly h / (0.6 v), muffled by the water above it. Lifting the foot out pulls water in behind the
+          heel (a rising “shlup”), then the shoe drips.</p>
+        <div class="formula">
+          <math display="block"><mrow><msub><mi>t</mi><mtext>heel</mtext></msub><mo>≈</mo><mfrac><mi>h</mi><mrow><mn>0.6</mn><mspace width="0.1em"/><mi>v</mi></mrow></mfrac></mrow></math>
+          <div class="hear">
+            <button class="btn small" type="button" data-hear="solo:slap,thud"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1.8v12.4L14 8z"/></svg>only the foot</button>
+          </div>
+        </div>
+      </article>
+      <article>
+        <h3>5 · Summing it up</h3>
+        <p>A single step is between one and three thousand of these events. Each is computed sample by sample, spread
+          across left and right, summed, given a touch of outdoor reverb and normalised. Nothing is sampled from a
+          recording: the numbers on this page are the whole instrument.</p>
+        <div class="formula">
+          <p class="fine" id="eventCount"></p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section aria-labelledby="evolution">
+    <h2 id="evolution">How it got here</h2>
+    <p class="section-lede">Every version of the synthesizer is kept. Each row below runs that version’s code live on the same ankle-deep water: six steps of wading, or a single step.</p>
+    <div class="versions" id="versions"></div>
+  </section>
+
+  <footer>
+    <p>Bubble model after K. van den Doel, “Physically based models for liquid sounds”, <i>ACM Transactions on Applied Perception</i> 2(4), 2005: Minnaert resonance, the damping law, and the rising pitch of near-surface bubbles. The splash structure (pockets, blobs, ballistic droplets, the foot) is this project’s own.</p>
+    <p>Synthesized in your browser by about 600 lines of JavaScript. Made by Claude.</p>
+  </footer>
+</main>
+
+<script>
+/*%%SYNTHS%%*/
+</script>
+<script>
+"use strict";
+(() => {
+  const VERSIONS = /*%%VERSIONS%%*/;
+  const S = SYNTH;
+
+  const COMPONENTS = [
+    ["slap", "sole slap", "#ff5e57", "The sole hits the surface; the air cushion under it rings near 200 Hz"],
+    ["thud", "heel strike", "#c9745a", "The heel reaches the ground under the water"],
+    ["crown", "crown spray", "#eef3f5", "The sheet of water thrown up tears into ligaments and droplets"],
+    ["fizz", "fizz", "#8be9fd", "Small bubbles caught at the crown"],
+    ["cloud", "air pockets", "#3fa7ff", "Air dragged down by the foot, torn into pockets of bubbles"],
+    ["bloop", "cavity bloop", "#a98bff", "The air cavity above the foot pinching off"],
+    ["slosh", "slosh", "#93b86a", "Water rushing back around the foot"],
+    ["gurgle", "gurgle", "#36d39a", "Bubbles caught in the backwash"],
+    ["spray", "splats", "#ffb45c", "Blobs of thrown-up water landing"],
+    ["drop", "droplets", "#ffe9a0", "Fine droplets landing: a tick, sometimes a bubble"],
+    ["exit", "lift-out", "#ff7ac6", "The foot leaves; water closes in behind the heel"],
+    ["drip", "drips", "#f2c94c", "Drops falling off the foot"],
+    ["ambience", "ripples", "#6f8790", "Leftover lapping and the odd surfacing bubble"],
+  ];
+  const COLOR = Object.fromEntries(COMPONENTS.map((c) => [c[0], c[2]]));
+  const LABEL = Object.fromEntries(COMPONENTS.map((c) => [c[0], c[1]]));
+
+  const PARAMS = [
+    ["footSpeed", "Foot speed", 0.5, 3.5, 0.05, (v) => v.toFixed(2) + " m/s", "how fast the foot meets the surface"],
+    ["depth", "Water depth", 0.01, 0.4, 0.005, (v) => (v * 100).toFixed(1) + " cm", "sets bubbles, bloops, and when the heel lands"],
+    ["slap", "Sole flatness", 0, 1.5, 0.05, (v) => v.toFixed(2), "0 slices in toe-first, 1 lands flat"],
+    ["spray", "Spray", 0, 3, 0.05, (v) => "×" + v.toFixed(2), "how much water is thrown up"],
+    ["bubbles", "Entrained air", 0, 3, 0.05, (v) => "×" + v.toFixed(2), "how much air gets dragged under"],
+    ["xi", "Pitch rise ξ", 0, 0.6, 0.01, (v) => v.toFixed(2), "how fast near-surface bubbles glide up"],
+    ["alpha", "Size → loudness α", 0, 2, 0.05, (v) => "a ∝ r^" + v.toFixed(2), "higher: big bubbles dominate, darker"],
+    ["hardness", "Ground", 0, 1, 0.05, (v) => v.toFixed(2) + (v < 0.35 ? " · sand" : v < 0.7 ? " · gravel" : " · concrete"), "what the heel lands on"],
+    ["ambience", "Ripples after", 0, 1, 0.05, (v) => v.toFixed(2), "water still moving once the step is over"],
+    ["reverb", "Outdoor reverb", 0, 0.4, 0.01, (v) => v.toFixed(2), "reflections from the surroundings"],
+  ];
+
+  const state = { preset: "ankle", params: null, seed: 1, exit: false, walk: true, off: new Set() };
+  const presetParams = (name) => ({ ...S.DEFAULTS, ...S.PRESETS[name] });
+  state.params = presetParams("ankle");
+
+  // ------------------------------------------------------------ audio
+  let ctx = null, source = null, playing = null, raf = 0;
+  function audioCtx() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  }
+  function stop() {
+    if (source) { source.onended = null; try { source.stop(); } catch {} source = null; }
+    playing = null;
+    cancelAnimationFrame(raf);
+    drawHud();
+  }
+  function play(audio, kind = "main", offset = 0) {
+    const c = audioCtx();
+    stop();
+    const buf = c.createBuffer(2, audio.L.length, audio.sr);
+    buf.copyToChannel(audio.L, 0);
+    buf.copyToChannel(audio.R, 1);
+    source = c.createBufferSource();
+    source.buffer = buf;
+    source.connect(c.destination);
+    source.start(0, offset);
+    playing = { kind, t0: c.currentTime - offset, dur: buf.duration };
+    source.onended = () => { source = null; playing = null; drawHud(); };
+    const tick = () => { drawHud(); if (playing) raf = requestAnimationFrame(tick); };
+    raf = requestAnimationFrame(tick);
+  }
+
+  // ------------------------------------------------------------ spectrogram
+  const fftCache = new Map();
+  function fftOf(n) {
+    if (fftCache.has(n)) return fftCache.get(n);
+    const levels = Math.round(Math.log2(n));
+    const cos = new Float64Array(n / 2), sin = new Float64Array(n / 2);
+    for (let i = 0; i < n / 2; i++) { cos[i] = Math.cos((2 * Math.PI * i) / n); sin[i] = Math.sin((2 * Math.PI * i) / n); }
+    const rev = new Uint32Array(n);
+    for (let i = 0; i < n; i++) { let r = 0, x = i; for (let j = 0; j < levels; j++) { r = (r << 1) | (x & 1); x >>= 1; } rev[i] = r; }
+    const win = new Float64Array(n);
+    let wsum = 0;
+    for (let i = 0; i < n; i++) { win[i] = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / n); wsum += win[i] * win[i]; }
+    const fft = (re, im) => {
+      for (let i = 0; i < n; i++) {
+        const j = rev[i];
+        if (j > i) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; }
+      }
+      for (let size = 2; size <= n; size *= 2) {
+        const half = size / 2, step = n / size;
+        for (let i = 0; i < n; i += size) {
+          for (let j = i, k = 0; j < i + half; j++, k += step) {
+            const l = j + half;
+            const tr = re[l] * cos[k] + im[l] * sin[k];
+            const ti = im[l] * cos[k] - re[l] * sin[k];
+            re[l] = re[j] - tr; im[l] = im[j] - ti;
+            re[j] += tr; im[j] += ti;
+          }
+        }
+      }
+    };
+    const out = { fft, win, wsum };
+    fftCache.set(n, out);
+    return out;
+  }
+
+  const FMIN = 30, FMAX = 20000;
+  // two resolutions crossfaded on the log-frequency axis: long windows for low notes, short for clicks
+  function spectrogram(x, sr, W, H) {
+    const hop = Math.max(8, Math.floor(x.length / W));
+    const nFrames = Math.max(1, Math.ceil(x.length / hop));
+    const rowF = new Float64Array(H);
+    for (let r = 0; r < H; r++) rowF[r] = FMIN * Math.pow(FMAX / FMIN, 1 - r / Math.max(1, H - 1));
+    const img = new Float32Array(W * H);
+    const split = 700;
+    for (const [N, lo, hi] of [[2048, null, split], [512, split, null]]) {
+      const { fft, win, wsum } = fftOf(N);
+      const re = new Float64Array(N), im = new Float64Array(N), ps = new Float64Array(N / 2 + 1);
+      const w = new Float64Array(H), kpos = new Float64Array(H);
+      for (let r = 0; r < H; r++) {
+        const lg = Math.log2(rowF[r]);
+        let wr = 1;
+        if (lo !== null) wr *= Math.min(1, Math.max(0, 0.5 + (lg - Math.log2(lo))));
+        if (hi !== null) wr *= Math.min(1, Math.max(0, 0.5 - (lg - Math.log2(hi))));
+        w[r] = wr;
+        kpos[r] = (rowF[r] * N) / sr;
+      }
+      for (let c = 0; c < W; c++) {
+        const center = Math.min(nFrames - 1, Math.floor((c * nFrames) / W)) * hop;
+        const start = center - N / 2;
+        for (let i = 0; i < N; i++) {
+          const j = start + i;
+          re[i] = j >= 0 && j < x.length ? x[j] * win[i] : 0;
+          im[i] = 0;
+        }
+        fft(re, im);
+        for (let k = 0; k <= N / 2; k++) ps[k] = (re[k] * re[k] + im[k] * im[k]) / wsum;
+        for (let r = 0; r < H; r++) {
+          if (w[r] === 0) continue;
+          const k = Math.min(N / 2 - 1, kpos[r]), k0 = Math.floor(k), fr = k - k0;
+          const p = ps[k0] * (1 - fr) + ps[k0 + 1] * fr;
+          img[c * H + r] += w[r] * 10 * Math.log10(p + 1e-20);
+        }
+      }
+    }
+    return img;
+  }
+
+  const LUT = (() => {
+    const stops = [[0, [5, 14, 20]], [0.28, [10, 44, 68]], [0.5, [12, 104, 124]], [0.68, [30, 160, 162]],
+      [0.84, [140, 212, 194]], [1, [246, 251, 238]]];
+    const lut = new Uint8ClampedArray(256 * 3);
+    for (let i = 0; i < 256; i++) {
+      const v = i / 255;
+      let k = 0;
+      while (k < stops.length - 2 && v > stops[k + 1][0]) k++;
+      const [a, ca] = stops[k], [b, cb] = stops[k + 1];
+      const t = (v - a) / (b - a);
+      for (let ch = 0; ch < 3; ch++) lut[i * 3 + ch] = ca[ch] + (cb[ch] - ca[ch]) * t;
+    }
+    return lut;
+  })();
+
+  function paintSpectrogram(g, x, sr, px, py, W, H, rangeDb = 64) {
+    const img = spectrogram(x, sr, W, H);
+    let mx = -Infinity;
+    for (let i = 0; i < img.length; i++) if (img[i] > mx) mx = img[i];
+    const id = g.createImageData(W, H);
+    for (let c = 0; c < W; c++) {
+      for (let r = 0; r < H; r++) {
+        const v = Math.pow(Math.min(1, Math.max(0, (img[c * H + r] - mx + rangeDb) / rangeDb)), 1.5);
+        const li = Math.round(v * 255) * 3, o = (r * W + c) * 4;
+        id.data[o] = LUT[li]; id.data[o + 1] = LUT[li + 1]; id.data[o + 2] = LUT[li + 2]; id.data[o + 3] = 255;
+      }
+    }
+    g.putImageData(id, px, py);
+  }
+
+  // ------------------------------------------------------------ main canvas layout (CSS px)
+  const main = document.getElementById("main");
+  const screen = document.getElementById("screen");
+  const laneLabels = document.getElementById("laneLabels");
+  const L = { gutter: 100, specH: 250, axisH: 20, laneH: 15, lanesTop: 0, height: 0 };
+  function layout() {
+    L.specH = innerWidth < 600 ? 190 : 250;
+    L.lanesTop = L.specH + L.axisH;
+    L.height = L.lanesTop + COMPONENTS.length * L.laneH + 4;
+  }
+  const base = document.createElement("canvas");
+  let dpr = 1, cssW = 0, strokes = [], cur = null, selected = null;
+
+  const X = (t) => L.gutter + (t / cur.scene.duration) * (cssW - L.gutter);
+  const Y = (f) => L.specH * (1 - Math.log(f / FMIN) / Math.log(FMAX / FMIN));
+
+  function modeEnd(e) {
+    let T = 4.6 / e.d, f1 = e.f;
+    if (e.sigma > 0) {
+      T = Math.min(T, (e.fEnd / e.f - 1) / e.sigma);
+      f1 = e.f * (1 + e.sigma * T);
+    } else if (e.sigma < 0) {
+      f1 = Math.max(e.fEnd, e.f * (1 + e.sigma * T));
+    }
+    return { T, f1 };
+  }
+
+  function drawBase() {
+    layout();
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    cssW = Math.max(300, screen.clientWidth - 12);
+    for (const cv of [main, base]) { cv.width = Math.round(cssW * dpr); cv.height = Math.round(L.height * dpr); }
+    main.style.height = L.height + "px";
+    const g = base.getContext("2d");
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.fillStyle = "#050e14";
+    g.fillRect(0, 0, base.width, base.height);
+
+    const { L: aL, R: aR, sr } = cur.audio;
+    const mono = new Float32Array(aL.length);
+    for (let i = 0; i < mono.length; i++) mono[i] = 0.5 * (aL[i] + aR[i]);
+    const W = Math.round((cssW - L.gutter) * dpr), H = Math.round(L.specH * dpr);
+    paintSpectrogram(g, mono, sr, Math.round(L.gutter * dpr), 0, W, H);
+
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.font = '10.5px "Recursive", ui-monospace, monospace';
+    g.textBaseline = "middle";
+    // frequency axis
+    g.fillStyle = "#7f99a2"; g.strokeStyle = "rgba(160,200,210,0.13)"; g.lineWidth = 1;
+    g.textAlign = "right";
+    for (const f of [50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000]) {
+      const y = Y(f);
+      if (y < 6 || y > L.specH - 4) continue;
+      g.fillText(f >= 1000 ? f / 1000 + " kHz" : f + " Hz", L.gutter - 8, y);
+      g.beginPath(); g.moveTo(L.gutter, y + 0.5); g.lineTo(cssW, y + 0.5); g.stroke();
+    }
+    // time axis
+    const dur = cur.scene.duration;
+    const stepT = dur > 3 ? 0.5 : dur > 1.6 ? 0.2 : 0.1;
+    g.textAlign = "center";
+    for (let t = 0; t <= dur + 1e-9; t += stepT) {
+      const x = X(t);
+      g.fillStyle = "#7f99a2";
+      g.fillText(t === 0 ? "0 s" : (t < 0.999 ? Math.round(t * 1000) + " ms" : t.toFixed(1) + " s"), x, L.specH + L.axisH / 2);
+      g.fillStyle = "rgba(160,200,210,0.10)";
+      g.fillRect(x, L.lanesTop, 1, L.height - L.lanesTop);
+    }
+    // bubble strokes (every resonance is one equation instance)
+    strokes = [];
+    const modes = cur.events.filter((e) => e.kind === "mode");
+    let top = 0;
+    for (const e of modes) top = Math.max(top, e.amp);
+    modes.sort((a, b) => a.amp - b.amp);
+    g.lineCap = "round";
+    for (const e of modes) {
+      const rel = 20 * Math.log10(e.amp / top + 1e-12);
+      if (rel < -42) continue;
+      const { T, f1 } = modeEnd(e);
+      const x0 = X(e.t), y0 = Y(e.f), x1 = X(e.t + T), y1 = Y(f1);
+      if (y0 < 0 || y0 > L.specH) continue;
+      g.globalAlpha = Math.min(1, 0.25 + (0.75 * (rel + 42)) / 42);
+      g.strokeStyle = COLOR[e.src] || "#fff";
+      g.lineWidth = rel > -12 ? 1.8 : 1.2;
+      g.beginPath(); g.moveTo(x0, y0); g.lineTo(Math.max(x1, x0 + 1.5), y1); g.stroke();
+      strokes.push({ e, x0, y0, x1: Math.max(x1, x0 + 1.5), y1, rel });
+    }
+    g.globalAlpha = 1;
+    // one lane per mechanism: every event is a tick
+    const maxBySrc = {};
+    for (const e of cur.scene.events) maxBySrc[e.src] = Math.max(maxBySrc[e.src] || 0, e.amp);
+    COMPONENTS.forEach(([key], i) => {
+      const y = L.lanesTop + i * L.laneH;
+      g.fillStyle = i % 2 ? "rgba(255,255,255,0.018)" : "rgba(255,255,255,0.035)";
+      g.fillRect(L.gutter, y, cssW - L.gutter, L.laneH);
+      const muted = state.off.has(key);
+      g.fillStyle = COLOR[key];
+      for (const e of cur.scene.events) {
+        if (e.src !== key) continue;
+        g.globalAlpha = (muted ? 0.25 : 1) * Math.min(1, Math.max(0.1, Math.sqrt(e.amp / maxBySrc[key])));
+        g.fillRect(X(e.t), y + 3, 1.2, L.laneH - 6);
+      }
+      g.globalAlpha = 1;
+    });
+    placeLaneLabels();
+    drawHud();
+  }
+
+  function drawHud() {
+    if (!cur) return;
+    const g = main.getContext("2d");
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.drawImage(base, 0, 0);
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (selected) {
+      const s = selected;
+      g.strokeStyle = "#f0ad5a"; g.lineWidth = 3.2; g.lineCap = "round";
+      g.beginPath(); g.moveTo(s.x0, s.y0); g.lineTo(s.x1, s.y1); g.stroke();
+      g.beginPath(); g.arc(s.x0, s.y0, 5, 0, 2 * Math.PI); g.stroke();
+    }
+    if (playing && playing.kind === "main" && ctx) {
+      const t = ctx.currentTime - playing.t0;
+      if (t >= 0 && t <= cur.scene.duration) {
+        const x = X(t);
+        g.fillStyle = "#f0ad5a";
+        g.fillRect(x - 0.75, 0, 1.5, L.height);
+      }
+    }
+  }
+
+  function placeLaneLabels() {
+    if (!laneLabels.childElementCount) {
+      for (const [key, label, color, desc] of COMPONENTS) {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "lane-btn"; b.textContent = label; b.title = desc + " — click to mute";
+        b.style.setProperty("--c", color); b.dataset.src = key;
+        b.addEventListener("click", () => {
+          if (state.off.has(key)) state.off.delete(key); else state.off.add(key);
+          compute(); playMain();
+        });
+        laneLabels.appendChild(b);
+      }
+    }
+    [...laneLabels.children].forEach((b, i) => {
+      b.style.top = 12 + L.lanesTop + i * L.laneH + "px";
+      b.setAttribute("aria-pressed", String(!state.off.has(b.dataset.src)));
+    });
+  }
+
+  // ------------------------------------------------------------ compute + UI
+  const readout = document.getElementById("readout");
+  const noteLine = document.getElementById("noteLine");
+  const card = document.getElementById("bubbleCard");
+  const DEFAULT_NOTE = noteLine.textContent;
+
+  function sceneFor(params, seed) {
+    return state.walk ? S.makeWalk(params, seed, { steps: 6 }) : S.makeStep(params, seed);
+  }
+  function compute() {
+    const t0 = performance.now();
+    const params = { ...state.params, exit: state.exit };
+    const scene = sceneFor(params, state.seed);
+    const events = scene.events.filter((e) => !state.off.has(e.src));
+    const audio = S.render({ ...scene, events }, { seed: state.seed });
+    cur = { scene, events, audio, ms: performance.now() - t0 };
+    selected = null; card.hidden = true;
+    drawBase();
+    readout.textContent = `take #${state.seed} · ${events.length.toLocaleString()} events · computed in ${Math.round(cur.ms)} ms`;
+    const nOff = state.off.size;
+    noteLine.textContent = nOff
+      ? `${nOff} of ${COMPONENTS.length} mechanisms muted; what remains is normalised to full level.`
+      : DEFAULT_NOTE;
+    document.getElementById("eventCount").textContent =
+      `This take: ${events.length.toLocaleString()} events, ${events.filter((e) => e.kind === "mode").length.toLocaleString()} of them bubbles or other resonances.`;
+  }
+  const playMain = () => cur && play(cur.audio, "main");
+
+  document.getElementById("play").addEventListener("click", () => {
+    if (playing && playing.kind === "main") stop(); else playMain();
+  });
+  document.getElementById("reroll").addEventListener("click", () => {
+    state.seed = 1 + Math.floor(Math.random() * 9999);
+    compute(); playMain();
+  });
+  const presetBtns = [...document.querySelectorAll("#presets button")];
+  function paintPresets() {
+    for (const b of presetBtns) b.setAttribute("aria-checked", String(b.dataset.preset === state.preset));
+  }
+  for (const b of presetBtns) b.addEventListener("click", () => {
+    state.preset = b.dataset.preset;
+    state.params = presetParams(state.preset);
+    paintPresets(); syncControls(); compute(); playMain();
+  });
+  const exitInput = document.getElementById("exit");
+  function paintToggles() {
+    exitInput.disabled = state.walk;
+    exitInput.closest("label").title = state.walk ? "A walk always lifts each foot back out" : "";
+  }
+  for (const id of ["exit", "walk"]) {
+    document.getElementById(id).addEventListener("change", (ev) => {
+      state[id] = ev.target.checked; paintToggles(); compute(); playMain();
+    });
+  }
+  addEventListener("keydown", (ev) => {
+    if (ev.code !== "Space" || ev.target !== document.body) return;
+    ev.preventDefault();
+    if (playing && playing.kind === "main") stop(); else playMain();
+  });
+
+  // sliders
+  const controls = document.getElementById("controls");
+  const valEls = {};
+  const inputs = {};
+  for (const [key, label, min, max, step, fmt, hint] of PARAMS) {
+    const wrap = document.createElement("div");
+    wrap.className = "ctl";
+    wrap.innerHTML = `<div class="ctl-head"><label for="p-${key}">${label}</label><span class="val" id="v-${key}"></span></div>
+      <input type="range" id="p-${key}" min="${min}" max="${max}" step="${step}">
+      <div class="hint">${hint}</div>`;
+    controls.appendChild(wrap);
+    const input = wrap.querySelector("input");
+    inputs[key] = input; valEls[key] = wrap.querySelector(".val");
+    input.addEventListener("input", () => { valEls[key].textContent = fmt(Number(input.value)); });
+    input.addEventListener("change", () => {
+      state.params = { ...state.params, [key]: Number(input.value) };
+      compute(); playMain();
+    });
+  }
+  function syncControls() {
+    for (const [key, , , , , fmt] of PARAMS) {
+      inputs[key].value = state.params[key];
+      valEls[key].textContent = fmt(Number(state.params[key]));
+    }
+  }
+
+  // click a stroke -> that one bubble alone
+  function describe(e) {
+    const vdd = 0.043 * e.f + 0.0014 * Math.pow(e.f, 1.5);
+    const { T, f1 } = modeEnd(e);
+    const hz = (f) => (f >= 1000 ? (f / 1000).toFixed(2) + " kHz" : Math.round(f) + " Hz");
+    const at = `at ${Math.round(e.t * 1000)} ms`;
+    if (e.src === "slap") return { title: `Air cushion under the sole · ${at}`,
+      rows: [`rings at <b>${hz(e.f)}</b>, gone within <b>${(1000 / e.d).toFixed(0)} ms</b> (1/d)`,
+        "a flat pocket of air squeezed between sole and water, venting as it rings"] };
+    if (e.src === "thud") return { title: `Heel strike on the bottom · ${at}`,
+      rows: [`a <b>${hz(e.f)}</b> thump sagging to ${hz(f1)}, 1/d = ${(1000 / e.d).toFixed(0)} ms`,
+        "muffled by the water above the foot"] };
+    const rows = [
+      `radius <b>r = ${(e.r * 1000).toFixed(2)} mm</b>`,
+      `Minnaert pitch <b>f₀ = 3.26 / r = ${hz(e.f)}</b>`,
+      `rings for <b>1/d = ${(1000 / e.d).toFixed(1)} ms</b>` +
+        (e.d > vdd * 1.05 ? ` (damped ×${(e.d / vdd).toFixed(1)} by its neighbours in the pocket)` : ` (d = ${Math.round(e.d)} s⁻¹)`),
+    ];
+    if (e.sigma > 0) rows.push(`glides up to <b>${hz(f1)}</b> as it nears the surface (ξ = ${(e.sigma / e.d).toFixed(2)})`);
+    else rows.push("born deep, so its pitch holds steady");
+    return { title: `One bubble · ${LABEL[e.src]} · ${at}`, rows };
+  }
+  function playEvent(e) {
+    const dur = Math.min(1.5, 9.2 / e.d) + 0.08;
+    const one = { duration: dur, events: [{ ...e, t: 0.02, pan: 0 }], params: { reverb: 0 } };
+    play(S.render(one, { seed: 7, peakDb: -4, floorDb: null }), "event");
+  }
+  function showCard(s) {
+    const { title, rows } = describe(s.e);
+    card.style.setProperty("--c", COLOR[s.e.src]);
+    card.innerHTML = `<span class="swatch"></span><div><h3>${title}</h3><div class="kv">${rows.map((r) => `<span>${r}</span>`).join("")}
+      <span>${s.rel > -0.5 ? "the loudest resonance in this take" : `${Math.round(-s.rel)} dB below the loudest resonance in this take`}</span></div>
+      <div class="hear" style="margin-top:10px"><button class="btn small" type="button" id="replayOne"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1.8v12.4L14 8z"/></svg>play it again</button></div></div>`;
+    card.hidden = false;
+    document.getElementById("replayOne").addEventListener("click", () => playEvent(s.e));
+  }
+  function segDist(px, py, s) {
+    const dx = s.x1 - s.x0, dy = s.y1 - s.y0;
+    const t = Math.max(0, Math.min(1, ((px - s.x0) * dx + (py - s.y0) * dy) / (dx * dx + dy * dy || 1)));
+    return Math.hypot(px - (s.x0 + t * dx), py - (s.y0 + t * dy));
+  }
+  main.addEventListener("click", (ev) => {
+    const r = main.getBoundingClientRect();
+    const px = ev.clientX - r.left, py = ev.clientY - r.top;
+    if (py > L.specH || px < L.gutter) return;
+    let best = null, bd = 8;
+    for (const s of strokes) {
+      const d = segDist(px, py, s);
+      if (d < bd || (best && Math.abs(d - bd) < 0.5 && s.rel > best.rel)) { best = s; bd = Math.min(bd, d); }
+    }
+    if (best) {
+      selected = best; showCard(best); playEvent(best.e); drawHud();
+    } else {
+      selected = null; card.hidden = true;
+      const t = ((px - L.gutter) / (cssW - L.gutter)) * cur.scene.duration;
+      play(cur.audio, "main", Math.max(0, t - 0.02));
+    }
+  });
+
+  // "hear it" buttons in the explanation
+  function soloPlay(keys) {
+    const events = cur.scene.events.filter((e) => keys.includes(e.src));
+    if (!events.length) {
+      noteLine.textContent = "This scene has none of those — try Ankle-deep or Shin-deep.";
+      return;
+    }
+    play(S.render({ ...cur.scene, events }, { seed: state.seed }), "solo");
+  }
+  function oneBubble(r, xi) {
+    const f = 3.26 / r, d = 0.043 * f + 0.0014 * Math.pow(f, 1.5);
+    const e = { kind: "mode", src: "cloud", t: 0.02, f, d, sigma: xi * d, fEnd: f * 1.6, amp: 1, attack: 0.3 / f, pan: 0, r };
+    play(S.render({ duration: Math.min(1.2, 9.2 / d) + 0.08, events: [e], params: { reverb: 0 } }, { seed: 3, peakDb: -4, floorDb: null }), "event");
+  }
+  for (const b of document.querySelectorAll("[data-hear]")) {
+    b.addEventListener("click", () => {
+      const h = b.dataset.hear;
+      if (h === "bubble3") oneBubble(0.003, 0.35);
+      else if (h === "bubble3flat") oneBubble(0.003, 0);
+      else if (h === "bubble1") oneBubble(0.001, 0.35);
+      else if (h.startsWith("solo:")) soloPlay(h.slice(5).split(","));
+    });
+  }
+
+  // ------------------------------------------------------------ history
+  const verHost = document.getElementById("versions");
+  const verAudio = {};  // "<id>:<walk|step>" -> rendered audio
+  const verShown = {};  // id -> which of the two the row's spectrogram shows
+  const PLAY_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1.8v12.4L14 8z"/></svg>';
+  const defaultVerMode = (v) => (SYNTH_VERSIONS[v.id].makeWalk ? "walk" : "step");
+  for (const v of VERSIONS) {
+    const row = document.createElement("div");
+    row.className = "ver";
+    row.innerHTML = `<span class="ver-id">${v.id}</span><div><h3>${v.title}</h3><p>${v.note}</p></div>
+      <canvas aria-label="Spectrogram of ${v.id}"></canvas>
+      <div class="ver-play">
+        ${SYNTH_VERSIONS[v.id].makeWalk ? `<button class="btn small" type="button" data-mode="walk" aria-label="Play six steps with ${v.id}">${PLAY_ICON}6 steps</button>` : ""}
+        <button class="btn small" type="button" data-mode="step" aria-label="Play one step with ${v.id}">${PLAY_ICON}1 step</button>
+      </div>`;
+    verHost.appendChild(row);
+    for (const b of row.querySelectorAll("[data-mode]")) {
+      b.addEventListener("click", () => {
+        const mode = b.dataset.mode;
+        if (verShown[v.id] !== mode) renderVersion(v, row, mode);
+        play(versionAudio(v, mode), "version");
+      });
+    }
+  }
+  function versionAudio(v, mode) {
+    const key = `${v.id}:${mode}`;
+    if (!verAudio[key]) {
+      const syn = SYNTH_VERSIONS[v.id];
+      verAudio[key] = mode === "walk"
+        ? syn.render(syn.makeWalk(syn.PRESETS.ankle, 3, { steps: 6 }), { seed: 3 })
+        : syn.render(syn.makeStep(syn.PRESETS.ankle, 1), { seed: 1 });
+    }
+    return verAudio[key];
+  }
+  function renderVersion(v, row, mode) {
+    const audio = versionAudio(v, mode);
+    verShown[v.id] = mode;
+    for (const b of row.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String(b.dataset.mode === mode));
+    const cv = row.querySelector("canvas");
+    const w = Math.max(200, cv.clientWidth), h = 72, d = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.round(w * d); cv.height = Math.round(h * d);
+    const mono = new Float32Array(audio.L.length);
+    for (let i = 0; i < mono.length; i++) mono[i] = 0.5 * (audio.L[i] + audio.R[i]);
+    paintSpectrogram(cv.getContext("2d"), mono, audio.sr, 0, 0, cv.width, cv.height);
+  }
+  function renderVersionsLazily() {
+    const rows = [...verHost.children];
+    let i = 0;
+    const next = () => {
+      if (i >= VERSIONS.length) return;
+      renderVersion(VERSIONS[i], rows[i], defaultVerMode(VERSIONS[i]));
+      i++;
+      setTimeout(next, 30);
+    };
+    setTimeout(next, 60);
+  }
+
+  // ------------------------------------------------------------ boot
+  paintPresets();
+  paintToggles();
+  syncControls();
+  compute();
+  renderVersionsLazily();
+  let resizeT = 0;
+  addEventListener("resize", () => {
+    clearTimeout(resizeT);
+    resizeT = setTimeout(() => {
+      drawBase();
+      const rows = [...verHost.children];
+      VERSIONS.forEach((v, i) => renderVersion(v, rows[i], verShown[v.id] || defaultVerMode(v)));
+    }, 200);
+  });
+  document.fonts?.ready?.then(() => drawBase());
+})();
+</script>

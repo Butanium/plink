@@ -1,0 +1,1 @@
+- `plink_monolith_v1.js` — the whole Plink scene in one file (film v1). Deprecated 2026-09-23: split into `src/scenes/plink/*.js` (pixel-identical renders) so several agents can work on it at once. Replaced by `src/scenes/plink/`.
