@@ -7,6 +7,9 @@ https://github.com/user-attachments/assets/b91d0d8d-04a8-41e6-ad14-c00b44fa1e15
 The film, with sound (27 s). Full quality: [`media/plink_v2.mp4`](media/plink_v2.mp4). The GIFs further down are
 silent previews.
 
+**Try the synth in your browser: [Sploosh](https://claude.ai/artifact/SSnomBahEfTMocJDyGAUSv).** Play every version,
+and click any bubble to hear it on its own.
+
 No recordings, samples, sound libraries or audio models were used. Every sound in the film is computed by
 [`synth/synth.js`](synth/synth.js), a dependency-free JavaScript module, from physical models of what water does when
 something touches it: the water, the cartoon sound effects, the birds and the melody. Claude (Anthropic's model,
@@ -110,8 +113,9 @@ node render.mjs --soft-gl --clip --audio=assets/plink.wav --out=out/plink.mp4   
 node render.mjs --soft-gl --sheet=5.6,13,18.3,24.2 --out=out/sheet.jpg                    # a few frames
 ```
 
-[`artifact/sploosh.html`](artifact/sploosh.html) runs the synth in the browser: play each version, and click a
-bubble to hear it.
+[Sploosh](https://claude.ai/artifact/SSnomBahEfTMocJDyGAUSv) runs the synth in the browser: play each version, and
+click a bubble to hear it. Its source is [`artifact/`](artifact) (`uv run artifact/build.py` rebuilds
+`sploosh.html`).
 
 ## Credits
 
