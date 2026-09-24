@@ -2,9 +2,10 @@
 
 **The sound of a foot stepping into water, computed from physics, and a 27-second animated film scored with it.**
 
-![Clawd touches the water with one toe: plink](media/plink_toetap.gif)
+https://github.com/user-attachments/assets/b91d0d8d-04a8-41e6-ad14-c00b44fa1e15
 
-▶ **[Watch the film with sound](media/plink_v2.mp4)** (27 s, MP4). The GIFs on this page are silent previews.
+The film, with sound (27 s). Full quality: [`media/plink_v2.mp4`](media/plink_v2.mp4). The GIFs further down are
+silent previews.
 
 No recordings, samples, sound libraries or audio models were used. Every sound in the film is computed by
 [`synth/synth.js`](synth/synth.js), a dependency-free JavaScript module, from physical models of what water does when
@@ -69,6 +70,7 @@ the same events:
   adds A B C♯, and the last drop plays the high D. A small music note pops up at each note, except under the
   jump's big splash.
 
+![Clawd touches the water with one toe: plink](media/plink_toetap.gif)
 ![a trot footfall: the foot comes out, hangs, and comes down into its own splash](media/plink_trot.gif)
 ![the jump](media/plink_jump.gif)
 ![the last drop](media/plink_drip.gif)
